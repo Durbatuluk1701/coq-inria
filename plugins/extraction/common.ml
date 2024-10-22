@@ -603,6 +603,7 @@ let pp_global_with_key k key r =
       | JSON -> dottify (List.map unquote rls)
       | Haskell -> if modular () then pp_haskell_gen k mp rls else s
       | Ocaml -> pp_ocaml_gen k mp rls (Some l)
+      | CakeML -> pp_ocaml_gen k mp rls (Some l)
 
 let pp_global k r =
   pp_global_with_key k (repr_of_r r) r
@@ -670,6 +671,7 @@ let get_native_char c =
   Char.chr (cumul l)
 
 let pp_native_char c = str ("'"^Char.escaped (get_native_char c)^"'")
+let pp_native_char_cakeml c = str ("'"^Char.escaped (get_native_char c)^"'")
 
 (** Special hack for constants of type String.string : if an
     [Extract Inductive string => string] has been declared, then
@@ -691,6 +693,7 @@ let check_extract_string () =
     let string_type = match lang () with
       | Ocaml -> "string"
       | Haskell -> "Prelude.String"
+      | CakeML -> "string"
       | _ -> raise Not_found
     in
     String.equal (find_custom @@ string_type_ref ()) string_type

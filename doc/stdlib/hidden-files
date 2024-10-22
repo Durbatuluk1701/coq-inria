@@ -23,6 +23,9 @@ theories/extraction/ExtrOCamlPString.v
 theories/extraction/ExtrOcamlNativeString.v
 theories/extraction/ExtrOcamlZBigInt.v
 theories/extraction/ExtrOcamlZInt.v
+theories/extraction/ExtrCakeMLBasic.v
+theories/extraction/ExtrCakeMLChar.v
+theories/extraction/ExtrCakeMLNativeString.v
 theories/extraction/Extraction.v
 theories/funind/FunInd.v
 theories/funind/Recdef.v
