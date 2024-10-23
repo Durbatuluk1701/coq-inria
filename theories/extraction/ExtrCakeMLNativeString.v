@@ -26,7 +26,7 @@ Extract Inductive string => "string"
 "
 (* String *)
 "(* If this appears, you're using String internals. Please don't *)
-  (fn (c, s) => ((String.str c) ^ s))
+  (fn c => fn s => ((String.str c) ^ s))
 "
 ]
 "(* If this appears, you're using String internals. Please don't *)

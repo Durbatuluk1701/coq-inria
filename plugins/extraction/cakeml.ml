@@ -43,6 +43,10 @@ let pp_letin pat def body =
 
 (*s Ocaml renaming issues. *)
 
+let dummy_type = "Ml___dummy"
+let dummy_val = "ml___dummy"
+let proof_exception = "ProofException"
+
 let keywords =
   List.fold_right (fun s -> Id.Set.add (Id.of_string s))
     [ "and"; "andalso"; "as"; "case"; "datatype";
@@ -50,7 +54,7 @@ let keywords =
       "if"; "in"; "include"; "let"; "local"; "of"; "op"; "open"; "orelse";
       "raise"; "rec"; "sharing"; "sig"; "signature"; "struct"; "structure";
       "then"; "type"; "val"; "where"; "with"; "withtype";
-      "land"; "lor"; "lxor"; "lsl"; "lsr"; "asr" ; "unit" ; "_" ; "ml___dummy" ]
+      "land"; "lor"; "lxor"; "lsl"; "lsr"; "asr" ; "unit" ; "_" ; dummy_type; dummy_val; proof_exception ]
     Id.Set.empty
 
 (* Note: do not shorten [str "foo" ++ fnl ()] into [str "foo\n"],
@@ -66,13 +70,13 @@ let then_nl pp = if Pp.ismt pp then mt () else pp ++ fnl ()
 
 (* TODO: Bad probably*)
 let pp_tdummy usf =
-  if usf.tdummy || usf.tunknown then str "type ml___dummy = unit" ++ fnl () else mt ()
+  if usf.tdummy || usf.tunknown then str "type " ++ str dummy_type ++ str " = unit" ++ fnl () else mt ()
 
 (* TODO: Bad probably*)
 let pp_mldummy usf =
-  if usf.mldummy then
-    str "let ml__dummy = let rec f _ = f in f" ++ fnl ()
-  else mt ()
+  if usf.mldummy then 
+    str "val " ++ str dummy_val ++ str " = ()" ++ fnl() ++
+    str "exception " ++ str proof_exception ++ fnl () else mt ()
 
 let preamble _ comment used_modules usf =
   pp_header_comment comment ++
@@ -157,8 +161,8 @@ let pp_type par vl t =
     | Tarr (t1,t2) ->
       pp_par par
         (pp_rec true t1 ++ spc () ++ str "->" ++ spc () ++ pp_rec false t2)
-    | Tdummy _ -> str "ml___dummy"
-    | Tunknown -> str "ml___dummy"
+    | Tdummy _ -> str dummy_type
+    | Tunknown -> str dummy_type
   in
   hov 0 (pp_rec par t)
 
@@ -201,7 +205,18 @@ let is_ifthenelse = function
 let expr_needs_par = function
   | MLlam _  -> true
   | MLcase (_,_,[|_|]) -> false
-  | MLcase (_,_,pv) -> not (is_ifthenelse pv)
+  | MLcase (_,ast,pv) -> 
+    (match ast with
+    (* CakeML parsing scales exponentially with parenthesized 
+      nested case statements, so avoid them!
+    *)
+    | MLcase _ -> 
+      print_endline "Case statement 1";
+        false
+    | _ -> 
+      print_endline "Case statement 2";
+      print_endline (Bool.to_string (not (is_ifthenelse pv)));
+      false)
   | _        -> false
 
 let rec pp_expr par env args =
@@ -212,7 +227,7 @@ let rec pp_expr par env args =
     let id = get_db_name n env in
     (* Try to survive to the occurrence of a Dummy rel.
        TODO: we should get rid of this hack (cf. #592) *)
-    let id = if Id.equal id dummy_name then Id.of_string "ml___dummy" else id in
+    let id = if Id.equal id dummy_name then Id.of_string dummy_val else id in
     apply (Id.print id)
   | MLapp (f,args') ->
     let stl = List.map (pp_expr true env []) args' in
@@ -235,12 +250,12 @@ let rec pp_expr par env args =
     pp_fix par env' i (Array.of_list (List.rev ids'),defs) args
   | MLexn s ->
     (* An [MLexn] may be applied, but I don't really care. *)
-    pp_par par (str "Runtime.assert \"false\" false" ++ spc () ++ str ("(* "^s^" *)"))
+    pp_par par (str "raise " ++ str proof_exception ++ str ("(* "^s^" *)"))
   | MLdummy k ->
     (* An [MLdummy] may be applied, but I don't really care. *)
     (match msg_of_implicit k with
-     | "" -> str "ml___dummy"
-     | s -> str "ml___dummy" ++ spc () ++ str ("(* "^s^" *)"))
+     | "" -> str dummy_val
+     | s -> str dummy_val ++ spc () ++ str ("(* "^s^" *)"))
   | MLmagic a -> pp_expr true env args a
   | MLaxiom s ->
         pp_par par (str "failwith \"AXIOM TO BE REALIZED (" ++ str s ++ str ")\"")
@@ -460,11 +475,11 @@ let pp_singleton kn packet =
 let pp_coind pl name =
   let pl = rename_tvars keywords pl in
   pp_parameters pl ++ name ++ str " = " ++
-  pp_parameters pl ++ str "ml___dummy" ++ name ++ str " Lazy.t" ++
+  pp_parameters pl ++ str dummy_val ++ name ++ str " Lazy.t" ++
   fnl() ++ str "and "
 
 let pp_ind co kn ind =
-  let prefix = if co then "ml___dummy" else "" in
+  let prefix = if co then dummy_val else "" in
   let initkwd = str "datatype " in
   let nextkwd = fnl () ++ str "and " in
   let names =

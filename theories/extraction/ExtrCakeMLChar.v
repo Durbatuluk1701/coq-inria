@@ -18,7 +18,7 @@ Require Export ExtrCakeMLBasic.
 Extract Inductive ascii => char
 [
 "(* If this appears, you're using Ascii internals. Please don't *)
- (fn (b0,b1,b2,b3,b4,b5,b6,b7) =>
+ (fn b0 => fn b1 => fn b2 => fn b3 => fn b4 => fn b5 => fn b6 => fn b7 =>
   let fun f b i = if b then (Word8.toInt (Word8.<< (Word8.fromInt 1) i)) else 0 in
   Char.chr (f b0 0 + f b1 1 + f b2 2 + f b3 3 + f b4 4 + f b5 5 + f b6 6 + f b7 7)
   end)"

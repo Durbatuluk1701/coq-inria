@@ -645,6 +645,7 @@ let check_extract_ascii () =
     let char_type = match lang () with
       | Ocaml -> "char"
       | Haskell -> "Prelude.Char"
+      | CakeML -> "char"
       | _ -> raise Not_found
     in
     String.equal (find_custom @@ ascii_type_ref ()) (char_type)
@@ -671,7 +672,7 @@ let get_native_char c =
   Char.chr (cumul l)
 
 let pp_native_char c = str ("'"^Char.escaped (get_native_char c)^"'")
-let pp_native_char_cakeml c = str ("'"^Char.escaped (get_native_char c)^"'")
+let pp_native_char_cakeml c = str ("#\""^Char.escaped (get_native_char c)^"\"")
 
 (** Special hack for constants of type String.string : if an
     [Extract Inductive string => string] has been declared, then
