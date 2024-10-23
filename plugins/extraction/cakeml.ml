@@ -206,17 +206,11 @@ let expr_needs_par = function
   | MLlam _  -> true
   | MLcase (_,_,[|_|]) -> false
   | MLcase (_,ast,pv) -> 
-    (match ast with
     (* CakeML parsing scales exponentially with parenthesized 
       nested case statements, so avoid them!
     *)
-    | MLcase _ -> 
-      print_endline "Case statement 1";
-        false
-    | _ -> 
-      print_endline "Case statement 2";
-      print_endline (Bool.to_string (not (is_ifthenelse pv)));
-      false)
+    false
+    (* not (is_ifthenelse pv) *)
   | _        -> false
 
 let rec pp_expr par env args =
