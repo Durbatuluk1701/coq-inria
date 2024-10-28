@@ -198,9 +198,9 @@ let is_bool_patt p s =
   with Not_found -> false
 
 
-(* let is_ifthenelse = function
+let is_ifthenelse = function
   | [|([],p1,_);([],p2,_)|] -> is_bool_patt p1 "true" && is_bool_patt p2 "false"
-  | _ -> false *)
+  | _ -> false
 
 let expr_needs_par = function
   | MLlam _  -> true
@@ -210,8 +210,7 @@ let expr_needs_par = function
     CakeML parsing scales exponentially with parenthesized 
       nested case statements, so avoid them!
     *)
-    false
-    (* not (is_ifthenelse pv) *)
+    not (is_ifthenelse pv)
   | _        -> false
 
 let rec pp_expr par env args =
