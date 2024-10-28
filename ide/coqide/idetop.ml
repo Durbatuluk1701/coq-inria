@@ -100,7 +100,7 @@ let add ((((s,eid),(sid,verbose)),off),(line_nb,bol_pos)) =
             ; line_nb_last=line_nb
             ; bol_pos_last=bol_pos } in
   let r_stream = Gramlib.Stream.of_string ~offset:off s in
-  let pa = Pcoq.Parsable.make ~loc r_stream in
+  let pa = Procq.Parsable.make ~loc r_stream in
   match Stm.parse_sentence ~doc sid ~entry:Pvernac.main_entry pa with
   | None -> assert false (* s may not be empty *)
   | Some ast ->
@@ -127,13 +127,13 @@ let edit_at id =
  * be removed in the next version of the protocol.
  *)
 let query (route, (s,id)) =
-  let pa = Pcoq.Parsable.make (Gramlib.Stream.of_string s) in
+  let pa = Procq.Parsable.make (Gramlib.Stream.of_string s) in
   let doc = get_doc () in
   Stm.query ~at:id ~doc ~route pa
 
 let annotate phrase =
   let doc = get_doc () in
-  let pa = Pcoq.Parsable.make (Gramlib.Stream.of_string phrase) in
+  let pa = Procq.Parsable.make (Gramlib.Stream.of_string phrase) in
   match Stm.parse_sentence ~doc (Stm.get_current_state ~doc) ~entry:Pvernac.main_entry pa with
   | None -> Richpp.richpp_of_pp ~width:78 (Pp.mt ())
   | Some ast ->
@@ -346,13 +346,13 @@ let pattern_of_string ?env s =
     | None -> Global.env ()
     | Some e -> e
   in
-  let constr = Pcoq.parse_string Pcoq.Constr.cpattern s in
+  let constr = Procq.parse_string Procq.Constr.cpattern s in
   let (_, pat) = Constrintern.intern_constr_pattern env (Evd.from_env env) constr in
   pat
 
 let dirpath_of_string_list s =
   let path = String.concat "." s in
-  let qid = Pcoq.parse_string Pcoq.Constr.global path in
+  let qid = Procq.parse_string Procq.Constr.global path in
   let id =
     try Nametab.full_name_module qid
     with Not_found ->
@@ -687,9 +687,9 @@ coqidetop specific options:\n\
 \n  --help-XML-protocol    print documentation of the Coq XML protocol\n"
 }
 
-let islave_parse extra_args =
+let islave_parse opts extra_args =
   let open Coqtop in
-  let ({ run_mode; color_mode }, stm_opts), extra_args = coqtop_toplevel.parse_extra extra_args in
+  let ({ run_mode; color_mode }, stm_opts), extra_args = coqtop_toplevel.parse_extra opts extra_args in
   let extra_args = parse extra_args in
   (* One of the role of coqidetop is to find the name of buffers to open *)
   (* in the command line; Coqide is waiting these names on stdout *)

@@ -39,6 +39,8 @@ module AsyncOpts = struct
   type tac_error_filter = FNone | FOnly of string list | FAll
 
   type stm_opt = {
+    spawn_args : string list;
+
     async_proofs_n_workers : int;
     async_proofs_n_tacworkers : int;
 
@@ -55,7 +57,9 @@ module AsyncOpts = struct
     async_proofs_worker_priority : CoqworkmgrApi.priority;
   }
 
-  let default_opts = {
+  let default_opts ~spawn_args = {
+    spawn_args;
+
     async_proofs_n_workers = 1;
     async_proofs_n_tacworkers = 2;
 
@@ -191,9 +195,9 @@ let mkTransCmd cast cids ceff cqueue =
 
 type cached_state =
   | EmptyState
-  | ParsingState of Pcoq.frozen_t
+  | ParsingState of Procq.frozen_t
   | FullState of Vernacstate.t
-  | ErrorState of Pcoq.frozen_t option * Exninfo.iexn
+  | ErrorState of Procq.frozen_t option * Exninfo.iexn
 type branch = Vcs_.Branch.t * Vcs_.branch_info
 type backup = { mine : branch; others : branch list }
 
@@ -309,7 +313,7 @@ module VCS : sig
     mutable vcs_backup : vcs option * backup option;
   }
 
-  val init : stm_doc_type -> id -> Pcoq.frozen_t -> doc
+  val init : stm_doc_type -> id -> Procq.frozen_t -> doc
   (* val get_type : unit -> stm_doc_type *)
   val set_ldir : Names.DirPath.t -> unit
   val get_ldir : unit -> Names.DirPath.t
@@ -339,8 +343,8 @@ module VCS : sig
   val goals : id -> int -> unit
   val set_state : id -> cached_state -> unit
   val get_state : id -> cached_state
-  val set_parsing_state : id -> Pcoq.frozen_t -> unit
-  val get_parsing_state : id -> Pcoq.frozen_t option
+  val set_parsing_state : id -> Procq.frozen_t -> unit
+  val get_parsing_state : id -> Procq.frozen_t option
   val get_proof_mode : id -> Pvernac.proof_mode option
 
   (* cuts from start -> stop, raising Expired if some nodes are not there *)
@@ -1588,7 +1592,7 @@ and Slaves : sig
   val wait_all_done : unit -> unit
 
   (* initialize the whole machinery (optional) *)
-  val init : CoqworkmgrApi.priority -> unit
+  val init : spawn_args:string list -> CoqworkmgrApi.priority -> unit
 
   type 'a tasks = (('a,VCS.vcs) Stateid.request * bool) list
   val dump_snapshot : unit -> Future.UUID.t tasks
@@ -1602,11 +1606,11 @@ end = struct (* {{{ *)
   module TaskQueue = AsyncTaskQueue.MakeQueue(ProofTask) ()
 
   let queue = ref None
-  let init priority =
+  let init ~spawn_args priority =
     if async_proofs_is_master (cur_opt()) then
-      queue := Some (TaskQueue.create (cur_opt()).async_proofs_n_workers priority)
+      queue := Some (TaskQueue.create ~spawn_args (cur_opt()).async_proofs_n_workers priority)
     else
-      queue := Some (TaskQueue.create 0 priority)
+      queue := Some (TaskQueue.create ~spawn_args 0 priority)
 
   let build_proof ~doc ?loc ~drop_pt ~exn_info ~block_start ~block_stop ~name:pname () =
     let cancel_switch = ref false in
@@ -2227,7 +2231,7 @@ let init_process stm_flags =
   CoqworkmgrApi.(init stm_flags.AsyncOpts.async_proofs_worker_priority);
   if (cur_opt()).async_proofs_mode = APon then Control.enable_thread_delay := true;
   if !Flags.async_proofs_worker_id = "master" && (cur_opt()).async_proofs_n_tacworkers > 0 then
-    Partac.enable_par ~nworkers:(cur_opt()).async_proofs_n_tacworkers
+    Partac.enable_par ~spawn_args:stm_flags.spawn_args ~nworkers:(cur_opt()).async_proofs_n_tacworkers
 
 let init_core () =
   State.register_root_state ()
@@ -2238,7 +2242,7 @@ let new_doc { doc_type ; injections } =
   State.restore_root_state ();
 
   let doc =
-    let ps = Pcoq.freeze () in
+    let ps = Procq.freeze () in
     VCS.init doc_type Stateid.initial ps
   in
 
@@ -2268,7 +2272,7 @@ let new_doc { doc_type ; injections } =
   (* We record the state at this point! *)
   State.define ~doc ~cache:true ~redefine:true (fun () -> ()) Stateid.initial;
   Backtrack.record ();
-  Slaves.init (cur_opt()).async_proofs_worker_priority;
+  Slaves.init ~spawn_args:((cur_opt()).spawn_args) (cur_opt()).async_proofs_worker_priority;
   if async_proofs_is_master (cur_opt()) then begin
     stm_prerr_endline (fun () -> "Initializing workers");
     Query.init (cur_opt()).async_proofs_worker_priority;
@@ -2534,7 +2538,7 @@ let process_transaction ~doc ?(newtip=Stateid.fresh ()) x c =
               | VtNow ->
                 (* We need to execute to get the new parsing state *)
                 let () = observe ~doc:dummy_doc (VCS.get_branch_pos (VCS.current_branch ())) in
-                let parsing = Pcoq.freeze () in
+                let parsing = Procq.freeze () in
                 (* If execution has not been put in cache, we need to save the parsing state *)
                 if (VCS.get_info id).state == EmptyState then VCS.set_parsing_state id parsing;
                 parsing
@@ -2579,8 +2583,8 @@ let stop_worker n = Slaves.cancel_worker n
 let parse_sentence ~doc sid ~entry pa =
   let ps = Option.get @@ VCS.get_parsing_state sid in
   let proof_mode = VCS.get_proof_mode sid in
-  Pcoq.unfreeze ps;
-  Pcoq.Entry.parse (entry proof_mode) pa
+  Procq.unfreeze ps;
+  Procq.Entry.parse (entry proof_mode) pa
 
 (* You may need to know the len + indentation of previous command to compute
  * the indentation of the current one.
