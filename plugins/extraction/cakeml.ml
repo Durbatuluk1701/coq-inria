@@ -154,7 +154,7 @@ let pp_type par vl t =
         pp_par par (pp_rec true a1 ++ str (get_infix r) ++ pp_rec true a2)
     | Tglob (r,[]) -> pp_global Type r
     | Tglob (gr,l)
-        when not (keep_singleton ()) && Coqlib.check_ref sig_type_name gr ->
+        when not (keep_singleton ()) && Rocqlib.check_ref sig_type_name gr ->
         pp_tuple_light pp_rec l
     | Tglob (r,l) ->
         pp_tuple_light pp_rec l ++ spc () ++ pp_global Type r
@@ -173,7 +173,7 @@ let rec has_type_vars = function
     | Tglob (r,[a1;a2]) when is_infix r -> has_type_vars a1 || has_type_vars a2
     | Tglob (r,[]) -> false
     | Tglob (gr,l)
-      when not (keep_singleton ()) && Coqlib.check_ref sig_type_name gr ->
+      when not (keep_singleton ()) && Rocqlib.check_ref sig_type_name gr ->
       List.fold_left (||) false (List.map has_type_vars l)
     | Tglob (r,l) ->
       List.fold_left (||) false (List.map has_type_vars l)
@@ -198,15 +198,16 @@ let is_bool_patt p s =
   with Not_found -> false
 
 
-let is_ifthenelse = function
+(* let is_ifthenelse = function
   | [|([],p1,_);([],p2,_)|] -> is_bool_patt p1 "true" && is_bool_patt p2 "false"
-  | _ -> false
+  | _ -> false *)
 
 let expr_needs_par = function
   | MLlam _  -> true
   | MLcase (_,_,[|_|]) -> false
   | MLcase (_,ast,pv) -> 
-    (* CakeML parsing scales exponentially with parenthesized 
+    (* TODO: Restore after (https://github.com/CakeML/cakeml/issues/1075) is fixed:
+    CakeML parsing scales exponentially with parenthesized 
       nested case statements, so avoid them!
     *)
     false
