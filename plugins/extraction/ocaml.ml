@@ -808,6 +808,7 @@ let pp_struct s = do_struct pp_structure_elem s
 let pp_signature s = do_struct pp_specif s
 
 let ocaml_descr = {
+  lang_id = "OCaml";
   keywords = keywords;
   file_suffix = ".ml";
   file_naming = file_of_modfile;
@@ -817,4 +818,13 @@ let ocaml_descr = {
   sig_preamble = sig_preamble;
   pp_sig = pp_signature;
   pp_decl = pp_decl;
+  opts = {
+    extract_foreign_constants = true;
+    extract_callback = true;
+    unquote = false;
+    upperkind_type = false;
+    fully_qualify_names = false;
+    native_ascii_ref = Some "char";
+    native_string_ref = Some "string";
+  };
 }

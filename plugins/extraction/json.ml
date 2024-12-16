@@ -281,6 +281,7 @@ let pp_struct mls =
 
 
 let json_descr = {
+  lang_id = "JSON";
   keywords = Id.Set.empty;
   file_suffix = ".json";
   file_naming = file_of_modfile;
@@ -290,4 +291,13 @@ let json_descr = {
   sig_preamble = (fun _ _ _ _ -> mt ());
   pp_sig = (fun _ -> mt ());
   pp_decl = pp_decl;
+  opts = {
+    extract_callback = false;
+    extract_foreign_constants = false;
+    unquote = false;
+    upperkind_type = false;
+    fully_qualify_names = true;
+    native_ascii_ref = None;
+    native_string_ref = None;
+  }
 }

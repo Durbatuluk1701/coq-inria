@@ -232,6 +232,7 @@ let pp_struct =
   prlist_strict pp_sel
 
 let scheme_descr = {
+  lang_id = "Scheme";
   keywords = keywords;
   file_suffix = ".scm";
   file_naming = file_of_modfile;
@@ -241,4 +242,13 @@ let scheme_descr = {
   sig_preamble = (fun _ _ _ _ -> mt ());
   pp_sig = (fun _ -> mt ());
   pp_decl = pp_decl;
+  opts = {
+    extract_callback = false;
+    extract_foreign_constants = false;
+    unquote = true;
+    upperkind_type = false;
+    fully_qualify_names = true;
+    native_ascii_ref = None;
+    native_string_ref = None;
+  }
 }

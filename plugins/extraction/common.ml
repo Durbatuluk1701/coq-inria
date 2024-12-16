@@ -98,8 +98,9 @@ let begins_with_CoqXX s =
   with Not_found -> false
 
 let unquote s =
-  if lang () != Scheme then s
-  else String.map (fun c -> if c == '\'' then '~' else c) s
+  if (lang ()).opts.unquote 
+  then String.map (fun c -> if c == '\'' then '~' else c) s
+  else s
 
 let rec qualify delim = function
   | [] -> assert false
@@ -136,7 +137,7 @@ end
 module KMap = Map.Make(KOrd)
 
 let upperkind = function
-  | Type -> lang () == Haskell
+  | Type -> (lang()).opts.upperkind_type
   | Term -> false
   | Cons | Mod -> true
 
@@ -400,7 +401,7 @@ and mp_renaming =
 let ref_renaming_fun (k,r) =
   let mp = modpath_of_r r in
   let l = mp_renaming mp in
-  let l = if lang () != Ocaml && not (modular ()) then [""] else l in
+  let l = if (lang ()).opts.fully_qualify_names && not (modular ()) then [""] else l in
   let s =
     let idg = safe_basename_of_global r in
     match l with
@@ -640,14 +641,9 @@ let is_ascii_registered () =
 let ascii_type_ref () = Rocqlib.lib_ref ascii_type_name
 
 let check_extract_ascii () =
-  try
-    let char_type = match lang () with
-      | Ocaml -> "char"
-      | Haskell -> "Prelude.Char"
-      | _ -> raise Not_found
-    in
-    String.equal (find_custom @@ ascii_type_ref ()) (char_type)
-  with Not_found -> false
+  match (lang ()).opts.native_ascii_ref with
+  | None -> false
+  | Some ref -> String.equal (find_custom @@ ascii_type_ref ()) ref
 
 let is_list_cons l =
  List.for_all (function MLcons (_,GlobRef.ConstructRef(_,_),[]) -> true | _ -> false) l
@@ -687,14 +683,9 @@ let is_string_registered () =
 let string_type_ref () = Rocqlib.lib_ref string_type_name
 
 let check_extract_string () =
-  try
-    let string_type = match lang () with
-      | Ocaml -> "string"
-      | Haskell -> "Prelude.String"
-      | _ -> raise Not_found
-    in
-    String.equal (find_custom @@ string_type_ref ()) string_type
-  with Not_found -> false
+  match (lang ()).opts.native_string_ref with
+  | None -> false
+  | Some ref -> String.equal (find_custom @@ string_type_ref ()) ref
 
 (* The argument is known to be of type Strings.String.string.
    Check that it is built from constructors EmptyString and String

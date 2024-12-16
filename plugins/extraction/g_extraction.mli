@@ -9,5 +9,5 @@
 (************************************************************************)
 
 val wit_int_or_id: Table.int_or_id Genarg.vernac_genarg_type
-val wit_language: Table.lang Genarg.vernac_genarg_type
+val wit_language: Miniml.language_descr Genarg.vernac_genarg_type
 val wit_mlname: string Genarg.vernac_genarg_type

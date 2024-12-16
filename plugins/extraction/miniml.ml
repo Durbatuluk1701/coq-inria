@@ -199,7 +199,20 @@ type unsafe_needs = {
   magic : bool
 }
 
+type kind = Term | Type | Cons | Mod
+
+type language_opts = {
+  extract_callback : bool;
+  extract_foreign_constants : bool;
+  unquote : bool;
+  upperkind_type : bool;
+  fully_qualify_names : bool; (* Not as sure about this one *)
+  native_ascii_ref : string option;
+  native_string_ref : string option;
+}
+
 type language_descr = {
+  lang_id : string;
   keywords : Id.Set.t;
 
   (* Concerning the source file *)
@@ -222,4 +235,5 @@ type language_descr = {
   (* for an isolated declaration print *)
   pp_decl : ml_decl -> Pp.t;
 
+  opts : language_opts;
 }

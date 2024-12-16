@@ -396,13 +396,6 @@ let check_inside_section () =
     err (str "You can't do that within a section." ++ fnl () ++
          str "Close it and try again.")
 
-let warn_extraction_reserved_identifier =
-  CWarnings.create ~name:"extraction-reserved-identifier" ~category:CWarnings.CoreCategories.extraction
-    (fun s -> strbrk ("The identifier "^s^
-                " contains __ which is reserved for the extraction"))
-
-let warning_id s = warn_extraction_reserved_identifier s
-
 let error_constant ?loc r =
   err ?loc (safe_pr_global r ++ str " is not a constant.")
 
@@ -645,13 +638,11 @@ let { Goptions.get = file_comment } =
 
 (*s Extraction Lang *)
 
-type lang = Ocaml | Haskell | Scheme | JSON
-
-let lang_ref = Summary.ref Ocaml ~name:"ExtrLang"
+let lang_ref = Summary.ref Ocaml.ocaml_descr ~name:"ExtrLang"
 
 let lang () = !lang_ref
 
-let extr_lang : lang -> obj =
+let extr_lang : language_descr -> obj =
   declare_object @@ superglobal_object_nodischarge "Extraction Lang"
     ~cache:(fun l -> lang_ref := l)
     ~subst:None
@@ -958,8 +949,9 @@ let in_custom_matchs : GlobRef.t * string -> obj =
 (* Grammar entries. *)
 
 let extract_callback optstr x =
-  if lang () != Ocaml then
-      CErrors.user_err (Pp.str "Extract Callback is supported only for OCaml extraction.");
+  let lang = lang () in
+  if not lang.opts.extract_callback then
+      CErrors.user_err (Pp.str ("Extract Callback is not supported for " ^ lang.lang_id ^ " extraction."));
 
   let qualid_ref = Smartlocate.global_with_alias x in
   match qualid_ref with
@@ -992,8 +984,9 @@ let extract_constant_inline inline r ids s =
 
 (* const_name : qualid -> replacement : string*)
 let extract_constant_foreign r s =
-  if lang () != Ocaml then
-      CErrors.user_err (Pp.str "Extract Foreign Constant is supported only for OCaml extraction.");
+  let lang = lang () in
+  if not (lang.opts.extract_foreign_constants)then
+      CErrors.user_err (Pp.str ("Extract Foreign Constant is not supported for " ^ lang.lang_id ^ " extraction."));
   let arity_handler env typ g =
       CErrors.user_err (Pp.str "Extract Foreign Constant is supported only for functions.")
   in

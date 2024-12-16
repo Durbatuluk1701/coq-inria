@@ -400,6 +400,7 @@ let pp_struct =
 
 
 let haskell_descr = {
+  lang_id = "Haskell";
   keywords = keywords;
   file_suffix = ".hs";
   file_naming = string_of_modfile;
@@ -409,4 +410,13 @@ let haskell_descr = {
   sig_preamble = (fun _ _ _ _ -> mt ());
   pp_sig = (fun _ -> mt ());
   pp_decl = pp_decl;
+  opts = {
+    extract_callback = false;
+    extract_foreign_constants = false;
+    unquote = false;
+    upperkind_type = true;
+    fully_qualify_names = true;
+    native_ascii_ref = Some "Prelude.char";
+    native_string_ref = Some "Prelude.string";
+  }
 }

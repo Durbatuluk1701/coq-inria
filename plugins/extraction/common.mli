@@ -52,8 +52,6 @@ val get_phase : unit -> phase
 
 val opened_libraries : unit -> ModPath.t list
 
-type kind = Term | Type | Cons | Mod
-
 val pp_global_with_key : kind -> KerName.t -> GlobRef.t -> string
 val pp_global : kind -> GlobRef.t -> string
 val pp_global_name : kind -> GlobRef.t -> string

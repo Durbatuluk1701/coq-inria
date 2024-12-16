@@ -154,8 +154,7 @@ val file_comment : unit -> string
 
 (*s Target language. *)
 
-type lang = Ocaml | Haskell | Scheme | JSON
-val lang : unit -> lang
+val lang : unit -> language_descr
 
 (*s Extraction modes: modular or monolithic, library or minimal ?
 
@@ -200,7 +199,7 @@ val find_custom_match : ml_branch array -> string
 
 (*s Extraction commands. *)
 
-val extraction_language : lang -> unit
+val extraction_language : language_descr -> unit
 val extraction_inline : bool -> qualid list -> unit
 val print_extraction_inline : unit -> Pp.t
 val print_extraction_foreign : unit -> Pp.t

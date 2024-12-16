@@ -50,24 +50,6 @@ VERNAC ARGUMENT EXTEND int_or_id
 | [ integer(i) ] -> { ArgInt i }
 END
 
-{
-
-let pr_language = function
-  | Ocaml -> str "OCaml"
-  | Haskell -> str "Haskell"
-  | Scheme -> str "Scheme"
-  | JSON -> str "JSON"
-
-}
-
-VERNAC ARGUMENT EXTEND language
-PRINTED BY { pr_language }
-| [ "OCaml" ] -> { Ocaml }
-| [ "Haskell" ] -> { Haskell }
-| [ "Scheme" ] -> { Scheme }
-| [ "JSON" ] -> { JSON }
-END
-
 (* Extraction commands *)
 
 VERNAC COMMAND EXTEND Extraction CLASSIFIED AS QUERY STATE opaque_access
@@ -103,8 +85,8 @@ END
 
 (* Target Language *)
 VERNAC COMMAND EXTEND ExtractionLanguage CLASSIFIED AS SIDEFF
-| [ "Extraction" "Language" language(l) ]
-  -> { extraction_language l }
+| [ "Extraction" "Language" string(l) ]
+  -> { add_set_extraction_language l }
 END
 
 VERNAC COMMAND EXTEND ExtractionInline CLASSIFIED AS SIDEFF
